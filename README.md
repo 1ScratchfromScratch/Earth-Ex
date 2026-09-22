@@ -1,28 +1,33 @@
 # Earth-Ex
 
-Earth-Ex now supports **Vercel deployment**. Vercel cannot see a local `media/movies` folder or persist files on its function filesystem, so the Vercel version stores the library metadata and uploaded movies in **Vercel Blob**.
+Earth-Ex is a self-hosted website for a private movie library. It runs as a normal Node.js website—no Vercel services, Blob storage, or database service are required.
 
-## Deploy to Vercel
+## Run it
 
-1. Import this repository into Vercel.
-2. Create a Blob store in the Vercel dashboard and connect it to this project.
-3. Add these environment variables:
+```bash
+npm start
+```
 
-   - `ADMIN_USERNAME` — your admin username
-   - `ADMIN_PASSWORD` — a strong admin password
-   - `AUTH_SECRET` — a long random string
-   - `BLOB_READ_WRITE_TOKEN` — supplied by the connected Blob store
+Open <http://localhost:3000>.
 
-4. Redeploy and open your Vercel URL.
+The first administrator is created from these environment variables:
 
-The admin can upload supported movies from the dashboard, edit metadata, and create viewer accounts. Viewers can only browse and play. The **Scan folder** button is retained for the Docker/local deployment; Vercel has no access to your computer's folders.
+```bash
+ADMIN_USERNAME=admin ADMIN_PASSWORD=change-me-now npm start
+```
 
-> Vercel serverless functions have request-size and execution limits. For very large movies, direct client-to-Blob uploads or a dedicated media host is recommended. The Docker deployment remains available for unrestricted local-folder scanning and large-file streaming.
-
-## Local/Docker deployment
+Change the password before sharing the site. Docker is also supported:
 
 ```bash
 docker compose up -d --build
 ```
 
-The default local admin is `admin` / `change-me-now`; change it before exposing the service.
+## Add movies
+
+- Upload a video in the administrator dashboard, or put it in `media/movies`.
+- Click **Scan movie folder** after placing files manually.
+- Edit title, year, genre, description, and poster URL from the admin dashboard.
+
+Supported video extensions are MP4, WebM, MKV, AVI, MOV, and M4V. Metadata is stored in `data/library.json`; movies remain in `media/movies`.
+
+Only the administrator can upload, scan, edit metadata, and create viewer accounts. Viewer accounts can only browse and play movies.
