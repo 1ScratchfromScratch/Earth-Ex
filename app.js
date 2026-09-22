@@ -1,88 +1,12 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Earth-Ex</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <nav>
-      <a class="brand" href="#">EARTH<span>-EX</span></a>
-      <div class="nav-links">
-        <a href="#library">Library</a>
-        <a href="#about">About</a>
-      </div>
-      <button id="openEditor" class="outline">Edit library</button>
-    </nav>
-
-    <header class="hero">
-      <div>
-        <p class="eyebrow">YOUR PRIVATE SCREENING ROOM</p>
-        <h1>Stories worth<br><em>remembering.</em></h1>
-        <p class="hero-copy">A Plex-style home for the movies you love most.</p>
-        <a class="primary" href="#library">Browse library <span>→</span></a>
-      </div>
-      <div class="hero-art">
-        <div class="orb"></div>
-        <div class="hero-card">
-          <small>EARTH-EX / FEATURED</small>
-          <strong id="featuredTitle">Your collection</strong>
-        </div>
-      </div>
-    </header>
-
-    <main id="library">
-      <div class="section-head">
-        <div>
-          <p class="eyebrow">THE COLLECTION</p>
-          <h2>All movies</h2>
-        </div>
-        <input id="search" type="search" placeholder="Search titles..." />
-      </div>
-      <div id="movies" class="grid"></div>
-    </main>
-
-    <section id="about" class="about">
-      <p class="eyebrow">ABOUT EARTH-EX</p>
-      <h2>Your movies.<br><em>Your metadata.</em></h2>
-      <p>
-        Earth-Ex is a personal library styled like a private streaming app. Add movie URLs,
-        poster art, descriptions, genres, and release details right from this browser.
-      </p>
-    </section>
-
-    <dialog id="movieDialog">
-      <button class="close" type="button" onclick="movieDialog.close()">×</button>
-      <img id="dialogPoster" alt="Movie poster" />
-      <div class="dialog-info">
-        <p id="dialogMeta" class="eyebrow"></p>
-        <h2 id="dialogTitle"></h2>
-        <p id="dialogDescription"></p>
-        <a id="watchLink" class="primary" target="_blank" rel="noopener noreferrer">Watch movie <span>↗</span></a>
-      </div>
-    </dialog>
-
-    <dialog id="editorDialog">
-      <form id="editorForm">
-        <button type="button" class="close" onclick="editorDialog.close()">×</button>
-        <p class="eyebrow">LOCAL LIBRARY EDITOR</p>
-        <h2>Add or edit a movie</h2>
-
-        <input name="title" placeholder="Title" required />
-        <input name="year" placeholder="Year" />
-        <input name="genre" placeholder="Genre" />
-        <input name="poster" placeholder="Poster image URL" />
-        <input name="video" placeholder="Movie URL (MP4/WebM)" required />
-        <textarea name="description" placeholder="Description"></textarea>
-
-        <div class="dialog-actions">
-          <button type="button" class="outline" onclick="editorDialog.close()">Cancel</button>
-          <button type="submit" class="primary">Save movie</button>
-        </div>
-      </form>
-    </dialog>
-
-    <script src="app.js"></script>
-  </body>
-</html>
+const DB_NAME='earth-ex-movies';const STORE='movies';let movies=[];let activeId=null;let activeUrl=null;const $=s=>document.querySelector(s);
+function openDb(){return new Promise((resolve,reject)=>{const request=indexedDB.open(DB_NAME,1);request.onupgradeneeded=()=>request.result.createObjectStore(STORE,{keyPath:'id'});request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error)})}
+async function allMovies(){const db=await openDb();return new Promise((resolve,reject)=>{const r=db.transaction(STORE).objectStore(STORE).getAll();r.onsuccess=()=>resolve(r.result.sort((a,b)=>a.title.localeCompare(b.title)));r.onerror=()=>reject(r.error)})}
+async function putMovie(movie){const db=await openDb();return new Promise((resolve,reject)=>{const r=db.transaction(STORE,'readwrite').objectStore(STORE).put(movie);r.onsuccess=resolve;r.onerror=()=>reject(r.error)})}
+async function removeMovie(id){const db=await openDb();return new Promise((resolve,reject)=>{const r=db.transaction(STORE,'readwrite').objectStore(STORE).delete(id);r.onsuccess=resolve;r.onerror=()=>reject(r.error)})}
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function poster(m){return m.poster?`background-image:url('${esc(m.poster)}')`:''}
+function render(){const q=$('#search').value.toLowerCase();const shown=movies.filter(m=>`${m.title} ${m.genre} ${m.year}`.toLowerCase().includes(q));$('#featuredTitle').textContent=movies[0]?.title||'No movies yet';$('#storageNotice').textContent=movies.length?`${movies.length} movie${movies.length===1?'':'s'} stored on this device`:'Upload your first movie to get started.';$('#movies').innerHTML=shown.length?shown.map(m=>`<article class="movie" data-id="${m.id}"><div class="poster" style="${poster(m)}">${m.poster?'':'✦'}</div><div class="movie-copy"><p class="eyebrow">${esc(m.year||'EARTH-EX')} · ${esc(m.genre||'FEATURE')}</p><h3>${esc(m.title)}</h3><p>${esc(m.description||m.fileName)}</p><button class="watch-btn" type="button">Watch movie <span>→</span></button></div></article>`).join(''):'<div class="empty-state"><span>✦</span><p>No movies here yet.</p><button class="primary" onclick="openEditor()">Add your first movie</button></div>';document.querySelectorAll('.movie').forEach(c=>c.onclick=()=>openMovie(movies.find(m=>m.id===c.dataset.id)))}
+function openMovie(m){activeId=m.id;if(activeUrl)URL.revokeObjectURL(activeUrl);activeUrl=URL.createObjectURL(m.file);$('#player').src=activeUrl;$('#dialogTitle').textContent=m.title;$('#dialogMeta').textContent=`${m.year||'Year unknown'} · ${m.genre||'Uncategorized'} · ${m.fileName}`;$('#dialogDescription').textContent=m.description||'No description yet.';$('#deleteMovie').onclick=async()=>{if(confirm(`Delete ${m.title}?`)){await removeMovie(m.id);$('#movieDialog').close();await load()}};$('#movieDialog').showModal()}
+function stopMovie(){$('#player').pause();$('#player').removeAttribute('src');if(activeUrl){URL.revokeObjectURL(activeUrl);activeUrl=null}}
+async function load(){movies=await allMovies();render()}
+window.openEditor=()=>{$('#editorForm').reset();$('#formError').textContent='';$('#editorDialog').showModal()};$('#search').oninput=render;$('#editorForm').onsubmit=async e=>{e.preventDefault();const data=Object.fromEntries(new FormData(e.target));const file=data.file;if(!file||!file.size){$('#formError').textContent='Choose a movie file first.';return}try{await putMovie({id:crypto.randomUUID(),file,fileName:file.name,title:data.title.trim()||file.name.replace(/\.[^.]+$/,''),year:data.year.trim(),genre:data.genre.trim(),poster:data.poster.trim(),description:data.description.trim(),createdAt:Date.now()});$('#editorDialog').close();await load()}catch(error){$('#formError').textContent='The browser could not store this file. It may be too large for available storage.';console.error(error)}};window.addEventListener('beforeunload',stopMovie);load().catch(()=>{$('#storageNotice').textContent='This browser does not support local movie storage.'});
