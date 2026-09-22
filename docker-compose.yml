@@ -3,8 +3,8 @@ services:
     build: .
     ports: ["3000:3000"]
     environment:
-      ADMIN_USERNAME: admin
-      ADMIN_PASSWORD: change-me-now
+      ADMIN_USERNAME: Earthbound.
+      ADMIN_PASSWORD: Base44.app
       MOVIES_DIR: /data/movies
       DATA_DIR: /app/data
     volumes:
