@@ -1,13 +1,28 @@
 # Earth-Ex
 
-A private Plex-style movie server. The administrator uploads/scans movies and edits metadata; viewer accounts can only browse and play.
+Earth-Ex now supports **Vercel deployment**. Vercel cannot see a local `media/movies` folder or persist files on its function filesystem, so the Vercel version stores the library metadata and uploaded movies in **Vercel Blob**.
 
-## Start
+## Deploy to Vercel
+
+1. Import this repository into Vercel.
+2. Create a Blob store in the Vercel dashboard and connect it to this project.
+3. Add these environment variables:
+
+   - `ADMIN_USERNAME` — your admin username
+   - `ADMIN_PASSWORD` — a strong admin password
+   - `AUTH_SECRET` — a long random string
+   - `BLOB_READ_WRITE_TOKEN` — supplied by the connected Blob store
+
+4. Redeploy and open your Vercel URL.
+
+The admin can upload supported movies from the dashboard, edit metadata, and create viewer accounts. Viewers can only browse and play. The **Scan folder** button is retained for the Docker/local deployment; Vercel has no access to your computer's folders.
+
+> Vercel serverless functions have request-size and execution limits. For very large movies, direct client-to-Blob uploads or a dedicated media host is recommended. The Docker deployment remains available for unrestricted local-folder scanning and large-file streaming.
+
+## Local/Docker deployment
 
 ```bash
 docker compose up -d --build
 ```
 
-Open http://localhost:3000. Change `ADMIN_PASSWORD` in `docker-compose.yml` before exposing the service. Movies may be uploaded in the admin dashboard or placed in `media/movies`, then indexed with **Scan folder**. Supported formats: mp4, webm, mkv, avi, mov, and m4v.
-
-Movie files are kept outside the public web directory. Only authenticated users can stream them; only the admin can upload, scan, edit metadata, and create viewer accounts.
+The default local admin is `admin` / `change-me-now`; change it before exposing the service.
