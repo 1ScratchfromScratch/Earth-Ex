@@ -1,0 +1,13 @@
+services:
+  earth-ex:
+    build: .
+    ports: ["3000:3000"]
+    environment:
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: change-me-now
+      MOVIES_DIR: /data/movies
+      DATA_DIR: /app/data
+    volumes:
+      - ./media/movies:/data/movies
+      - ./data:/app/data
+    restart: unless-stopped

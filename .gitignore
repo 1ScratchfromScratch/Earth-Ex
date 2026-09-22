@@ -1,0 +1,5 @@
+node_modules/
+data/library.json
+.env
+media/movies/*
+!media/movies/.gitkeep
